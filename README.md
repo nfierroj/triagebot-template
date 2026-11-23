@@ -100,3 +100,5 @@ Los detalles obligatorios están en:
 Nombres:
 
 Metodología: `Vibe` / `Spec-Driven`
+
+Hola mundo
