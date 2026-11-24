@@ -95,6 +95,7 @@ El stack cerrado no está aquí: está en `BRIEF.md`, sección «Restricciones t
 | `GET /health` | `200 {"status": "ok"}` | — |
 | `POST /tickets` | `201` con el ticket ya clasificado | `422` si título o descripción vacíos, demasiado largos o con caracteres no latinos |
 | `GET /tickets` | `200` lista, filtrable por `category`, `priority` y `status` | — |
+| `GET /tickets/stats` | `200` JSON con el número de tickets por categoría, prioridad y estado | — |
 | `PATCH /tickets/{ticket_id}` | `200` ticket actualizado | `404` si no existe · `422` si el valor no está en el enum |
 | `GET /` | `200` HTML con el tablero (ver §6) | — |
 
@@ -143,6 +144,25 @@ GET /tickets?category=bug&priority=P1&status=open
 ```
 
 Devuelve `200` con una lista de tickets con la misma forma que la respuesta de `POST /tickets`.
+
+### `GET /tickets/stats`
+
+Devuelve en JSON cuántos tickets hay por categoría, por prioridad y por estado, más el total.
+No acepta filtros.
+
+```json
+{
+  "total": 4,
+  "by_category": {"bug": 2, "feature_request": 0, "question": 1, "urgent": 1},
+  "by_priority": {"P1": 2, "P2": 1, "P3": 1},
+  "by_status": {"closed": 1, "in_progress": 0, "open": 3}
+}
+```
+
+- Las claves de cada grupo son siempre todos los valores del enum, aunque no haya tickets: los
+  que no tienen ninguno salen con `0`.
+- Las claves salen en orden alfabético.
+- `total` es el número de tickets, y coincide con la suma de cada grupo.
 
 ### `PATCH /tickets/{ticket_id}`
 
