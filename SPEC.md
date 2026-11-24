@@ -19,14 +19,39 @@ Campos mínimos:
 | Campo | Tipo | Reglas |
 |---|---|---|
 | `id` | int | Autogenerado |
-| `title` | str | Obligatorio, 1–200 caracteres tras trim |
-| `description` | str | Obligatorio, 1–5000 caracteres tras trim |
+| `title` | str | Obligatorio, 1–200 caracteres tras trim. Solo caracteres latinos (ver abajo) |
+| `description` | str | Obligatorio, 1–5000 caracteres tras trim. Solo caracteres latinos (ver abajo) |
 | `category` | str | `bug`, `feature_request`, `question`, `urgent` |
 | `priority` | str | `P1`, `P2`, `P3` |
 | `tags` | list[str] | Lista, puede estar vacía |
 | `status` | str | `open`, `in_progress`, `closed` |
 | `created_at` | datetime | UTC, generado en servidor |
 | `updated_at` | datetime | UTC, actualizado en cambios relevantes |
+
+### Caracteres permitidos en `title` y `description`
+
+Solo se admite texto en alfabeto latino. Antes de validar, el texto se normaliza a Unicode NFC
+(una letra seguida de una tilde combinada se convierte en un único carácter, p. ej. `e` + `´` → `é`),
+y se guarda normalizado.
+
+Se admiten:
+
+- ASCII imprimible (letras, dígitos, espacio y puntuación básica).
+- Letras latinas con diacríticos y signos del bloque Latin-1 y Latin Extended: `á`, `ñ`, `ü`, `ç`,
+  `ø`, `¿`, `¡`, `«`, `»`…
+- Puntuación tipográfica: guiones (`–`, `—`), comillas (`“ ”`, `‘ ’`), puntos suspensivos (`…`).
+- El símbolo `€`.
+- Tabulador y saltos de línea.
+
+Se rechazan con `422`:
+
+- Emojis (incluidos los compuestos con modificadores de tono o banderas).
+- Otros alfabetos: cirílico, griego, árabe, chino, etc.
+- Símbolos fuera de los rangos anteriores (p. ej. `≈`).
+- Caracteres invisibles o de control (p. ej. espacio de ancho cero `U+200B`).
+
+El mensaje de error indica el campo y el primer carácter no válido. Los rangos exactos están en
+`ALLOWED_TEXT_RANGES` (`app/models.py`).
 
 Valores por defecto:
 
@@ -68,7 +93,7 @@ El stack cerrado no está aquí: está en `BRIEF.md`, sección «Restricciones t
 | Endpoint | Devuelve | Errores |
 |---|---|---|
 | `GET /health` | `200 {"status": "ok"}` | — |
-| `POST /tickets` | `201` con el ticket ya clasificado | `422` si título o descripción vacíos o demasiado largos |
+| `POST /tickets` | `201` con el ticket ya clasificado | `422` si título o descripción vacíos, demasiado largos o con caracteres no latinos |
 | `GET /tickets` | `200` lista, filtrable por `category`, `priority` y `status` | — |
 | `PATCH /tickets/{ticket_id}` | `200` ticket actualizado | `404` si no existe · `422` si el valor no está en el enum |
 | `GET /` | `200` HTML con el tablero (ver §6) | — |
@@ -107,6 +132,7 @@ Errores:
 
 - `422` si `title` está vacío (o solo espacios) o supera 200 caracteres.
 - `422` si `description` está vacía (o solo espacios) o supera 5000 caracteres.
+- `422` si `title` o `description` contienen emojis u otros caracteres no latinos (ver §2).
 
 ### `GET /tickets`
 
