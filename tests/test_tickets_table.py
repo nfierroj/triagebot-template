@@ -40,7 +40,7 @@ def test_get_tickets_rejects_values_outside_the_enum(client):
 def test_table_has_requested_columns_in_order(client):
     html = client.get("/tickets/table").text
     headers = re.findall(r"<th[^>]*>([^<]+)</th>", html)
-    assert headers == ["Prioridad", "Título", "Categoría", "Etiquetas", "Estado", "Creado por"]
+    assert headers == ["Prioridad", "Título", "Categoría", "Etiquetas", "Estado", "Creado"]
 
 
 def test_table_shows_10_rows_by_default_and_limit_is_selectable(client):
