@@ -87,6 +87,23 @@ def _filtered_tickets(
     )
 
 
+@app.get("/tickets/stats")
+def tickets_stats() -> dict:
+    """Conteo de tickets por categoría, prioridad y estado (incluye los valores a 0)."""
+
+    def counts(column: str, allowed: set[str]) -> dict[str, int]:
+        found = db.count_tickets_by(column)
+        return {value: found.get(value, 0) for value in sorted(allowed)}
+
+    by_status = counts("status", ALLOWED_STATUSES)
+    return {
+        "total": sum(by_status.values()),
+        "by_category": counts("category", ALLOWED_CATEGORIES),
+        "by_priority": counts("priority", ALLOWED_PRIORITIES),
+        "by_status": by_status,
+    }
+
+
 @app.get("/tickets", response_model=list[Ticket])
 def list_tickets(
     category: str | None = None, priority: str | None = None, status: str | None = None

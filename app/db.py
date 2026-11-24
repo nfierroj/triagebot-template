@@ -116,3 +116,15 @@ def update_ticket(
     finally:
         conn.close()
     return _row_to_dict(row) if row else None
+
+
+def count_tickets_by(column: str) -> dict[str, int]:
+    """Cuenta tickets agrupados por category, priority o status."""
+    if column not in {"category", "priority", "status"}:
+        raise ValueError(f"Columna no permitida: {column}")
+    conn = get_connection()
+    try:
+        rows = conn.execute(f"SELECT {column}, COUNT(*) FROM tickets GROUP BY {column}").fetchall()
+    finally:
+        conn.close()
+    return {row[0]: row[1] for row in rows}
