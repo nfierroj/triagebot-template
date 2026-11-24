@@ -14,6 +14,7 @@ from app.models import (
     ALLOWED_STATUSES,
     Ticket,
     TicketCreate,
+    TicketUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -130,4 +131,9 @@ def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "index.html", context)
 
 
-# TODO: implementar PATCH /tickets/{ticket_id}
+@app.patch("/tickets/{ticket_id}", response_model=Ticket)
+def update_ticket(ticket_id: int, payload: TicketUpdate) -> dict:
+    ticket = db.update_ticket(ticket_id, status=payload.status, priority=payload.priority)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    return ticket

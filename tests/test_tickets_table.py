@@ -77,3 +77,15 @@ def test_index_renders_table_and_row_selector(client):
     assert response.status_code == 200
     assert 'name="limit"' in response.text
     assert len(body_rows(response.text)) == 10
+
+
+def test_patch_updates_ticket_and_validates(client):
+    ticket = db.create_ticket("Fallo", "desc", "bug", "P1", [])
+
+    ok = client.patch(f"/tickets/{ticket['id']}", json={"status": "closed"})
+    assert ok.status_code == 200
+    assert ok.json()["status"] == "closed" and ok.json()["priority"] == "P1"
+
+    assert client.patch("/tickets/999", json={"status": "closed"}).status_code == 404
+    assert client.patch(f"/tickets/{ticket['id']}", json={"status": "done"}).status_code == 422
+    assert client.patch(f"/tickets/{ticket['id']}", json={"priority": "P9"}).status_code == 422
