@@ -61,7 +61,7 @@ def test_priority_badge_tags_and_empty_filter_values(client):
     html = client.get(
         "/tickets/table", params={"category": "", "priority": "", "status": "", "limit": 10}
     ).text
-    assert "bg-amber-400" in html and ">P2</span>" in html
+    assert "bg-orange-500" in html and ">P2</span>" in html
     assert ">login</span>" in html and ">vpn</span>" in html
 
 
@@ -89,3 +89,27 @@ def test_patch_updates_ticket_and_validates(client):
     assert client.patch("/tickets/999", json={"status": "closed"}).status_code == 404
     assert client.patch(f"/tickets/{ticket['id']}", json={"status": "done"}).status_code == 422
     assert client.patch(f"/tickets/{ticket['id']}", json={"priority": "P9"}).status_code == 422
+
+
+def test_priority_badge_colors(client):
+    for priority in ("P1", "P2", "P3"):
+        seed(1, priority=priority)
+    html = client.get("/tickets/table").text
+    assert 'bg-red-600 text-white">P1</span>' in html
+    assert 'bg-orange-500 text-white">P2</span>' in html
+    assert 'bg-green-600 text-white">P3</span>' in html
+
+
+def test_tickets_sorted_by_priority_then_newest_first(client):
+    seed(1, category="question", priority="P3")
+    seed(1, category="bug", priority="P1")
+    seed(1, category="urgent", priority="P2")
+    seed(1, category="feature_request", priority="P1")
+
+    tickets = client.get("/tickets").json()
+    assert [t["priority"] for t in tickets] == ["P1", "P1", "P2", "P3"]
+    # Dentro de P1, el más reciente primero.
+    assert [t["category"] for t in tickets[:2]] == ["feature_request", "bug"]
+
+    html = client.get("/tickets/table").text
+    assert re.findall(r">(P[123])</span>", html) == ["P1", "P1", "P2", "P3"]

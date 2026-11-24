@@ -69,7 +69,10 @@ def list_tickets(
     status: str | None = None,
     limit: int | None = None,
 ) -> list[dict]:
-    """Lista tickets (más recientes primero), filtrando por los campos que no sean None."""
+    """Lista tickets filtrando por los campos que no sean None.
+
+    Orden: por prioridad (P1, P2, P3) y, dentro de cada prioridad, más recientes primero.
+    """
     clauses: list[str] = []
     params: list[str | int] = []
     for column, value in (("category", category), ("priority", priority), ("status", status)):
@@ -80,7 +83,8 @@ def list_tickets(
     query = "SELECT * FROM tickets"
     if clauses:
         query += " WHERE " + " AND ".join(clauses)
-    query += " ORDER BY created_at DESC, id DESC"
+    # 'P1' < 'P2' < 'P3' en orden alfabético, así que ASC da P1 primero.
+    query += " ORDER BY priority ASC, created_at DESC, id DESC"
     if limit is not None:
         query += " LIMIT ?"
         params.append(limit)
