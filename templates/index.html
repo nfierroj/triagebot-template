@@ -31,9 +31,19 @@
                 htmx.trigger(document.body, 'ticket-created');
               } else {
                 const box = document.getElementById('form-error');
-                box.textContent = event.detail.xhr.status === 422
-                  ? 'Revisa los campos: el título (1–200) y la descripción (1–5000) son obligatorios.'
-                  : 'No se pudo crear el ticket. Inténtalo de nuevo.';
+                const xhr = event.detail.xhr;
+                let message = 'No se pudo crear el ticket. Inténtalo de nuevo.';
+                if (xhr.status === 422) {
+                  message = 'Revisa los campos: el título (1–200) y la descripción (1–5000) son obligatorios.';
+                  try {
+                    const labels = {title: 'Título', description: 'Descripción'};
+                    const custom = JSON.parse(xhr.responseText).detail
+                      .filter((e) => e.type === 'value_error')
+                      .map((e) => labels[e.loc.at(-1)] + ': ' + e.msg.replace(/^Value error, /, ''));
+                    if (custom.length) message = custom.join(' · ');
+                  } catch (err) { /* respuesta no JSON: mensaje genérico */ }
+                }
+                box.textContent = message;
                 box.classList.remove('hidden');
               }">
         <div>
