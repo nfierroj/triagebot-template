@@ -91,3 +91,24 @@ def list_tickets(
     finally:
         conn.close()
     return [_row_to_dict(row) for row in rows]
+
+
+def update_ticket(
+    ticket_id: int, status: str | None = None, priority: str | None = None
+) -> dict | None:
+    """Actualiza status y/o priority. Devuelve el ticket, o None si no existe."""
+    changes = {"status": status, "priority": priority}
+    changes = {column: value for column, value in changes.items() if value is not None}
+    conn = get_connection()
+    try:
+        with conn:
+            if changes:
+                assignments = ", ".join(f"{column} = ?" for column in changes)
+                conn.execute(
+                    f"UPDATE tickets SET {assignments}, updated_at = ? WHERE id = ?",
+                    [*changes.values(), datetime.now(UTC).isoformat(), ticket_id],
+                )
+            row = conn.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
+    finally:
+        conn.close()
+    return _row_to_dict(row) if row else None
