@@ -6,13 +6,60 @@
   <title>TriageBot</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <!-- POST /tickets acepta JSON: esta extensión serializa el formulario como JSON. -->
+  <script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
   <main class="mx-auto max-w-6xl p-6">
     <h1 class="text-3xl font-bold">TriageBot</h1>
     <p class="mt-2 text-slate-600">Tablero de incidencias con clasificación automática por IA.</p>
 
-    <!-- TODO: formulario de creación de tickets -->
+    <!-- Bloque 1: formulario para crear tickets -->
+    <section class="mt-8 rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-xl font-semibold">Nuevo ticket</h2>
+
+      <form id="ticket-form"
+            class="mt-4 space-y-4"
+            hx-post="/tickets"
+            hx-ext="json-enc"
+            hx-swap="none"
+            hx-disabled-elt="find button"
+            hx-on::before-request="document.getElementById('form-error').classList.add('hidden')"
+            hx-on::after-request="
+              if (event.detail.successful) {
+                this.reset();
+                htmx.trigger(document.body, 'ticket-created');
+              } else {
+                const box = document.getElementById('form-error');
+                box.textContent = event.detail.xhr.status === 422
+                  ? 'Revisa los campos: el título (1–200) y la descripción (1–5000) son obligatorios.'
+                  : 'No se pudo crear el ticket. Inténtalo de nuevo.';
+                box.classList.remove('hidden');
+              }">
+        <div>
+          <label for="title" class="block text-sm font-medium text-slate-700">Título</label>
+          <input id="title" name="title" type="text" required maxlength="200"
+                 class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-medium text-slate-700">Descripción</label>
+          <textarea id="description" name="description" rows="4" required maxlength="5000"
+                    class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div id="form-error" role="alert"
+             class="hidden rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200"></div>
+
+        <div class="flex items-center gap-3">
+          <button type="submit"
+                  class="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">
+            Crear ticket
+          </button>
+          <span class="htmx-indicator text-sm text-slate-500">Clasificando con IA…</span>
+        </div>
+      </form>
+    </section>
 
     <form id="filters" class="mt-6 flex flex-wrap items-end gap-4"
           hx-get="/tickets/table" hx-target="#tickets-table" hx-trigger="change">
@@ -43,7 +90,11 @@
       </label>
     </form>
 
-    <div id="tickets-table" class="mt-4">
+    <!-- Tras crear un ticket se recarga la tabla respetando los filtros activos. -->
+    <div id="tickets-table" class="mt-4"
+         hx-get="/tickets/table"
+         hx-include="#filters"
+         hx-trigger="ticket-created from:body">
       {% include "_tickets_table.html" %}
     </div>
   </main>
