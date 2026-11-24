@@ -6,13 +6,95 @@
   <title>TriageBot</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900">
-  <main class="mx-auto max-w-6xl p-6">
-    <h1 class="text-3xl font-bold">TriageBot</h1>
-    <p class="mt-2 text-slate-600">Tablero de incidencias con clasificación automática por IA.</p>
+<body class="bg-slate-50 text-slate-900" hx-ext="json-enc">
+  <main class="mx-auto max-w-6xl p-6 space-y-6">
+    <header>
+      <h1 class="text-3xl font-bold">TriageBot</h1>
+      <p class="mt-2 text-slate-600">Tablero de incidencias con clasificación automática por IA.</p>
+    </header>
 
-    <!-- TODO: formulario + filtros + tabla HTMX -->
+    <!-- 1. Formulario para crear tickets -->
+    <section class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Nuevo ticket</h2>
+      <form id="create-ticket-form"
+            class="mt-4 space-y-4"
+            hx-post="/tickets"
+            hx-swap="none"
+            hx-indicator="#create-spinner"
+            hx-disabled-elt="find button"
+            hx-on::before-request="document.getElementById('create-error').classList.add('hidden')"
+            hx-on::after-request="if (event.detail.successful) { this.reset(); htmx.trigger('#tickets', 'refresh'); } else { document.getElementById('create-error').classList.remove('hidden'); }">
+        <div>
+          <label for="title" class="block text-sm font-medium">Título</label>
+          <input id="title" name="title" type="text" required maxlength="200"
+                 class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label for="description" class="block text-sm font-medium">Descripción</label>
+          <textarea id="description" name="description" rows="4" required maxlength="5000"
+                    class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="submit"
+                  class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+            Crear ticket
+          </button>
+          <span id="create-spinner" class="htmx-indicator text-sm text-slate-500">Clasificando…</span>
+          <span id="create-error" class="hidden text-sm text-red-600" role="alert">
+            No se pudo crear el ticket. Revisa que título y descripción no estén vacíos.
+          </span>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2. Filtros -->
+    <section class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold">Filtros</h2>
+      <form id="filters"
+            class="mt-4 grid gap-4 sm:grid-cols-3"
+            hx-get="/partials/tickets"
+            hx-target="#tickets"
+            hx-trigger="change">
+        <label class="block text-sm font-medium">Categoría
+          <select name="category" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2">
+            <option value="">Todas</option>
+            <option value="bug">bug</option>
+            <option value="feature_request">feature_request</option>
+            <option value="question">question</option>
+            <option value="urgent">urgent</option>
+          </select>
+        </label>
+        <label class="block text-sm font-medium">Prioridad
+          <select name="priority" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2">
+            <option value="">Todas</option>
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+            <option value="P3">P3</option>
+          </select>
+        </label>
+        <label class="block text-sm font-medium">Estado
+          <select name="status" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2">
+            <option value="">Todos</option>
+            <option value="open">open</option>
+            <option value="in_progress">in_progress</option>
+            <option value="closed">closed</option>
+          </select>
+        </label>
+      </form>
+    </section>
+
+    <!-- 3. Tablero de tickets (se refresca sin recargar la página) -->
+    <section>
+      <h2 class="mb-3 text-lg font-semibold">Tickets</h2>
+      <div id="tickets"
+           hx-get="/partials/tickets"
+           hx-include="#filters"
+           hx-trigger="load, refresh">
+        <p class="text-sm text-slate-500">Cargando tickets…</p>
+      </div>
+    </section>
   </main>
 </body>
 </html>

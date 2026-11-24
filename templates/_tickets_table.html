@@ -10,7 +10,28 @@
       <th class="px-3 py-2 text-left text-sm font-semibold">Creado</th>
     </tr>
   </thead>
-  <tbody id="tickets-table-body">
-    <!-- TODO: renderizar tickets con Jinja2 -->
+  <tbody id="tickets-table-body" class="divide-y divide-slate-100">
+    {% for ticket in tickets %}
+    <tr>
+      <td class="px-3 py-2 text-sm text-slate-500">{{ ticket.id }}</td>
+      <td class="px-3 py-2 text-sm">
+        <div class="font-medium">{{ ticket.title }}</div>
+        <div class="text-slate-500">{{ ticket.description | truncate(100) }}</div>
+      </td>
+      <td class="px-3 py-2 text-sm">{{ ticket.category }}</td>
+      <td class="px-3 py-2 text-sm font-semibold">{{ ticket.priority }}</td>
+      <td class="px-3 py-2 text-sm">
+        {% for tag in ticket.tags %}
+        <span class="mr-1 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs">{{ tag }}</span>
+        {% endfor %}
+      </td>
+      <td class="px-3 py-2 text-sm">{{ ticket.status }}</td>
+      <td class="px-3 py-2 text-sm text-slate-500">{{ ticket.created_at[:16] | replace("T", " ") }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="7" class="px-3 py-6 text-center text-sm text-slate-500">No hay tickets que mostrar.</td>
+    </tr>
+    {% endfor %}
   </tbody>
 </table>

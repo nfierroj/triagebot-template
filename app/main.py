@@ -1,8 +1,11 @@
 """FastAPI app y endpoints HTTP de TriageBot."""
 
 import logging
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from app import classifier, db
 from app.models import (
@@ -15,6 +18,7 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="TriageBot")
+templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
 
 @app.get("/health")
@@ -57,4 +61,33 @@ def create_ticket(payload: TicketCreate) -> dict:
     )
 
 
-# TODO: implementar GET /tickets, PATCH /tickets/{ticket_id} y GET /
+@app.get("/tickets", response_model=list[Ticket])
+def list_tickets(
+    category: str | None = None,
+    priority: str | None = None,
+    status: str | None = None,
+) -> list[dict]:
+    return db.list_tickets(category, priority, status)
+
+
+@app.get("/partials/tickets", response_class=HTMLResponse)
+def tickets_table(
+    request: Request,
+    category: str | None = None,
+    priority: str | None = None,
+    status: str | None = None,
+) -> HTMLResponse:
+    """Fragmento HTML con la tabla de tickets (lo pide HTMX)."""
+    return templates.TemplateResponse(
+        request,
+        "_tickets_table.html",
+        {"tickets": db.list_tickets(category, priority, status)},
+    )
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "index.html", {})
+
+
+# TODO: implementar PATCH /tickets/{ticket_id}

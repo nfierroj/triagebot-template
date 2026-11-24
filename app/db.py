@@ -42,6 +42,27 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
     return data
 
 
+def list_tickets(
+    category: str | None = None,
+    priority: str | None = None,
+    status: str | None = None,
+) -> list[dict]:
+    """Lista tickets (más recientes primero), filtrando por los campos que se pasen."""
+    filters = {"category": category, "priority": priority, "status": status}
+    active = {column: value for column, value in filters.items() if value}
+    where = " AND ".join(f"{column} = ?" for column in active)
+    query = "SELECT * FROM tickets"
+    if where:
+        query += f" WHERE {where}"
+    query += " ORDER BY id DESC"
+    conn = get_connection()
+    try:
+        rows = conn.execute(query, tuple(active.values())).fetchall()
+    finally:
+        conn.close()
+    return [_row_to_dict(row) for row in rows]
+
+
 def create_ticket(
     title: str, description: str, category: str, priority: str, tags: list[str]
 ) -> dict:
