@@ -1,16 +1,43 @@
+{# Prioridad → clases del badge. P1 en rojo intenso para que destaque sobre las filas rojo claro. #}
+{% set badge = {
+  "P1": "bg-red-600 text-white",
+  "P2": "bg-amber-400 text-amber-950",
+  "P3": "bg-slate-500 text-white",
+} %}
 <table class="min-w-full divide-y divide-slate-200 bg-white shadow-sm ring-1 ring-slate-200 rounded-lg overflow-hidden">
   <thead class="bg-slate-100">
     <tr>
-      <th class="px-3 py-2 text-left text-sm font-semibold">ID</th>
+      <th class="px-3 py-2 text-left text-sm font-semibold">Prioridad</th>
       <th class="px-3 py-2 text-left text-sm font-semibold">Título</th>
       <th class="px-3 py-2 text-left text-sm font-semibold">Categoría</th>
-      <th class="px-3 py-2 text-left text-sm font-semibold">Prioridad</th>
-      <th class="px-3 py-2 text-left text-sm font-semibold">Tags</th>
+      <th class="px-3 py-2 text-left text-sm font-semibold">Etiquetas</th>
       <th class="px-3 py-2 text-left text-sm font-semibold">Estado</th>
-      <th class="px-3 py-2 text-left text-sm font-semibold">Creado</th>
+      <th class="px-3 py-2 text-left text-sm font-semibold">Creado por</th>
     </tr>
   </thead>
   <tbody id="tickets-table-body">
-    <!-- TODO: renderizar tickets con Jinja2 -->
+    {% for ticket in tickets %}
+    {# Filas impares (1.ª, 3.ª…) en rojo claro; pares (2.ª, 4.ª…) en blanco. #}
+    <tr class="{{ 'bg-red-100' if loop.index is odd else 'bg-white' }}">
+      <td class="px-3 py-2 text-sm">
+        <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold {{ badge[ticket.priority] }}">{{ ticket.priority }}</span>
+      </td>
+      <td class="px-3 py-2 text-sm font-medium">{{ ticket.title }}</td>
+      <td class="px-3 py-2 text-sm">{{ ticket.category }}</td>
+      <td class="px-3 py-2 text-sm">
+        {% for tag in ticket.tags %}
+        <span class="mr-1 inline-flex rounded bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700">{{ tag }}</span>
+        {% else %}
+        <span class="text-slate-400">—</span>
+        {% endfor %}
+      </td>
+      <td class="px-3 py-2 text-sm">{{ ticket.status }}</td>
+      <td class="px-3 py-2 text-sm whitespace-nowrap">{{ ticket.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+    </tr>
+    {% else %}
+    <tr class="bg-white">
+      <td colspan="6" class="px-3 py-6 text-center text-sm text-slate-500">No hay tickets que coincidan con el filtro.</td>
+    </tr>
+    {% endfor %}
   </tbody>
 </table>

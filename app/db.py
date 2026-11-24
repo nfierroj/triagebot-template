@@ -61,3 +61,33 @@ def create_ticket(
         ).fetchone()
     conn.close()
     return _row_to_dict(row)
+
+
+def list_tickets(
+    category: str | None = None,
+    priority: str | None = None,
+    status: str | None = None,
+    limit: int | None = None,
+) -> list[dict]:
+    """Lista tickets (más recientes primero), filtrando por los campos que no sean None."""
+    clauses: list[str] = []
+    params: list[str | int] = []
+    for column, value in (("category", category), ("priority", priority), ("status", status)):
+        if value is not None:
+            clauses.append(f"{column} = ?")
+            params.append(value)
+
+    query = "SELECT * FROM tickets"
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
+    query += " ORDER BY created_at DESC, id DESC"
+    if limit is not None:
+        query += " LIMIT ?"
+        params.append(limit)
+
+    conn = get_connection()
+    try:
+        rows = conn.execute(query, params).fetchall()
+    finally:
+        conn.close()
+    return [_row_to_dict(row) for row in rows]

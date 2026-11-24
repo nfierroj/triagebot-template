@@ -12,7 +12,40 @@
     <h1 class="text-3xl font-bold">TriageBot</h1>
     <p class="mt-2 text-slate-600">Tablero de incidencias con clasificación automática por IA.</p>
 
-    <!-- TODO: formulario + filtros + tabla HTMX -->
+    <!-- TODO: formulario de creación de tickets -->
+
+    <form id="filters" class="mt-6 flex flex-wrap items-end gap-4"
+          hx-get="/tickets/table" hx-target="#tickets-table" hx-trigger="change">
+      <label class="text-sm font-medium">Categoría
+        <select name="category" class="mt-1 block rounded border border-slate-300 bg-white px-2 py-1">
+          <option value="">Todas</option>
+          {% for value in categories %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="text-sm font-medium">Prioridad
+        <select name="priority" class="mt-1 block rounded border border-slate-300 bg-white px-2 py-1">
+          <option value="">Todas</option>
+          {% for value in priorities %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="text-sm font-medium">Estado
+        <select name="status" class="mt-1 block rounded border border-slate-300 bg-white px-2 py-1">
+          <option value="">Todos</option>
+          {% for value in statuses %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="text-sm font-medium">Filas a mostrar
+        <select name="limit" class="mt-1 block rounded border border-slate-300 bg-white px-2 py-1">
+          {% for n in page_size_options %}
+          <option value="{{ n }}" {% if n == default_page_size %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </form>
+
+    <div id="tickets-table" class="mt-4">
+      {% include "_tickets_table.html" %}
+    </div>
   </main>
 </body>
 </html>
