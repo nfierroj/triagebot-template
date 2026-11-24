@@ -23,6 +23,13 @@ class TicketCreate(BaseModel):
     description: str = Field(min_length=1, max_length=5000)
 
 
+class TicketUpdate(BaseModel):
+    """Payload de PATCH /tickets/{id}: solo se pueden cambiar status y priority."""
+
+    status: Status | None = None
+    priority: Priority | None = None
+
+
 class Ticket(BaseModel):
     """Ticket completo tal como se devuelve por la API."""
 
